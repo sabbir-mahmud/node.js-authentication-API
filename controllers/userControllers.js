@@ -5,7 +5,6 @@ import jwt from 'jsonwebtoken'
 // Create a new user
 const createUser = async (req, res) => {
     try {
-        console.log('route hitted');
         const { email, password, confirm_password, first_name, last_name } = req.body;
         if (email && password && confirm_password && first_name && last_name) {
             if (password === confirm_password) {
