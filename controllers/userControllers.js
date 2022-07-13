@@ -48,4 +48,37 @@ const createUser = async (req, res) => {
     }
 }
 
-export { createUser };
+const loginUser = async (req, res) => {
+    try {
+        const { email, password } = req.body;
+        if (email && password) {
+            const user = await UserModel.findOne({ email: email });
+            if (user) {
+                const isMatch = await bcrypt.compare(password, user.password);
+                if (isMatch) {
+                    const token = jwt.sign({ userID: user._id }, process.env.JWT_SECRET_KEY, { expiresIn: '1d' })
+                    res.status(200).json({
+                        message: "User logged in successfully", token: token
+                    })
+                } else {
+                    res.status(400).json({
+                        message: "Invalid password"
+                    })
+                }
+            } else {
+                res.status(400).json({
+                    message: "User does not exist"
+                })
+            }
+        } else {
+            res.status(400).json({
+                message: "Please fill all the required fields"
+            })
+        }
+
+    } catch (err) {
+        console.log(err);
+    }
+}
+
+export { createUser, loginUser };
