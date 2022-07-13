@@ -81,4 +81,45 @@ const loginUser = async (req, res) => {
     }
 }
 
-export { createUser, loginUser };
+const changePassword = async (req, res) => {
+    try {
+        const { old_password, new_password, confirm_password } = req.body;
+        if (old_password && new_password && confirm_password) {
+            if (new_password === confirm_password) {
+                const salt = await bcrypt.genSalt(10);
+                const hashedPassword = await bcrypt.hash(new_password, salt);
+                const user = await UserModel.findById(req.user._id)
+                const isMatch = await bcrypt.compare(old_password, user.password);
+                if (isMatch) {
+                    user.password = hashedPassword;
+                    await user.save();
+                    res.status(200).json({
+                        message: "Password changed successfully"
+                    })
+
+                } else {
+                    res.status(400).json({
+                        message: "Invalid old password"
+                    })
+                }
+            } else {
+                res.send({
+                    "status": "failed",
+                    "message": "New Password and Confirm New Password doesn't match"
+                })
+
+            }
+
+
+        } else {
+            res.status(400).json({
+                message: "Please fill all the required fields"
+            })
+        }
+
+    } catch (error) {
+        console.log(error);
+    }
+}
+
+export { createUser, loginUser, changePassword };
