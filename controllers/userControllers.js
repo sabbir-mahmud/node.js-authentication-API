@@ -1,8 +1,9 @@
 import UserModel from "../models/User.js";
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
+import transporter from "../config/emailConfig.js";
 
-// Create a new user
+// register controller
 const createUser = async (req, res) => {
     try {
         const { email, password, confirm_password, first_name, last_name } = req.body;
@@ -41,13 +42,12 @@ const createUser = async (req, res) => {
                 message: "Please fill all the required fields"
             });
         }
-
-
     } catch (err) {
         console.log(err);
     }
 }
 
+// login controller
 const loginUser = async (req, res) => {
     try {
         const { email, password } = req.body;
@@ -81,6 +81,7 @@ const loginUser = async (req, res) => {
     }
 }
 
+// change password controller
 const changePassword = async (req, res) => {
     try {
         const { old_password, new_password, confirm_password } = req.body;
@@ -103,14 +104,10 @@ const changePassword = async (req, res) => {
                     })
                 }
             } else {
-                res.send({
-                    "status": "failed",
-                    "message": "New Password and Confirm New Password doesn't match"
+                res.status(400).json({
+                    message: "New Password and Confirm New Password doesn't match"
                 })
-
             }
-
-
         } else {
             res.status(400).json({
                 message: "Please fill all the required fields"
@@ -122,4 +119,46 @@ const changePassword = async (req, res) => {
     }
 }
 
-export { createUser, loginUser, changePassword };
+// reset password controller
+const passwordResetEmailSender = async (req, res) => {
+    try {
+        const { email } = req.body;
+        if (email) {
+            const user = await UserModel.findOne({ email: email });
+            if (user) {
+                const secret = user._id + process.env.JWT_SECRET_KEY
+                console.log('user: ', user._id)
+                const token = jwt.sign({ userID: user._id }, secret, { expiresIn: '5m' })
+                console.log('token: ', token)
+                const resetLink = `http://localhost:3000/reset_password/${user._id}/${token}`
+                await transporter.sendMail({
+                    from: process.env.EMAIL_FROM,
+                    to: user.email,
+                    subject: "Password Reset Link",
+                    html: `<a href=${resetLink}>Click Here</a> to Reset Your Password`
+                })
+                res.status(200).json({
+                    message: "Password reset link sent to your email"
+                })
+            } else {
+                res.status(400).json({
+                    message: "User does not exist"
+                })
+            }
+        } else {
+            res.status(400).json({
+                message: "Please fill all the required fields"
+            })
+        }
+
+    } catch (err) {
+        console.log(err);
+    }
+}
+
+export {
+    createUser,
+    loginUser,
+    changePassword,
+    passwordResetEmailSender
+};
