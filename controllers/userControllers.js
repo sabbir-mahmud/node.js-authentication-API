@@ -156,9 +156,49 @@ const passwordResetEmailSender = async (req, res) => {
     }
 }
 
+const resetPassword = async (req, res) => {
+    try {
+        const { password, confirm_password } = req.body;
+        if (password && confirm_password) {
+            if (password === confirm_password) {
+                const salt = await bcrypt.genSalt(10);
+                const hashedPassword = await bcrypt.hash(password, salt);
+                const user = await UserModel.findById(req.params.id)
+                const secret = user._id + process.env.JWT_SECRET_KEY
+                const token = jwt.verify(req.params.token, secret)
+                if (token) {
+                    user.password = hashedPassword;
+                    await user.save();
+                    res.status(200).json({
+                        message: "Password changed successfully"
+                    })
+                } else {
+                    res.status(400).json({
+                        message: "Invalid token"
+                    })
+                }
+
+            } else {
+                res.status(400).json({
+                    message: "New Password and Confirm New Password doesn't match"
+                })
+            }
+        } else {
+            res.status(400).json({
+                message: "Please fill all the required fields"
+            })
+        }
+
+    } catch (err) {
+        console.log(err);
+    }
+
+}
+
 export {
     createUser,
     loginUser,
     changePassword,
-    passwordResetEmailSender
+    passwordResetEmailSender,
+    resetPassword
 };
