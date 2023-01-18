@@ -1,7 +1,7 @@
-import UserModel from "../models/User.js";
-import bcrypt from 'bcrypt'
-import jwt from 'jsonwebtoken'
+import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
 import transporter from "../config/emailConfig.js";
+import UserModel from "../models/User.js";
 
 // register controller
 const createUser = async (req, res) => {
@@ -23,9 +23,10 @@ const createUser = async (req, res) => {
                     });
                     await newUser.save();
                     const saved_user = await UserModel.findOne({ email: email });
-                    const token = jwt.sign({ userID: saved_user._id }, process.env.JWT_SECRET_KEY, { expiresIn: '1d' })
+                    const accessToken = jwt.sign({ userID: saved_user._id }, process.env.JWT_SECRET_KEY, { expiresIn: '1d' });
+                    const refreshToken = jwt.sign({ userID: saved_user._id }, process.env.JWT_SECRET_KEY, { expiresIn: '7d' });
                     res.status(200).json({
-                        message: "User created successfully", token: token
+                        message: "User created successfully", accessToken: accessToken, refreshToken: refreshToken
                     });
                 } else {
                     res.status(400).json({
@@ -56,9 +57,10 @@ const loginUser = async (req, res) => {
             if (user) {
                 const isMatch = await bcrypt.compare(password, user.password);
                 if (isMatch) {
-                    const token = jwt.sign({ userID: user._id }, process.env.JWT_SECRET_KEY, { expiresIn: '1d' })
+                    const accessToken = jwt.sign({ userID: user._id }, process.env.JWT_SECRET_KEY, { expiresIn: '1d' });
+                    const refreshToken = jwt.sign({ userID: user._id }, process.env.JWT_SECRET_KEY, { expiresIn: '7d' });
                     res.status(200).json({
-                        message: "User logged in successfully", token: token
+                        message: "User logged in successfully", accessToken: accessToken, refreshToken: refreshToken
                     })
                 } else {
                     res.status(400).json({
@@ -79,6 +81,32 @@ const loginUser = async (req, res) => {
     } catch (err) {
         console.log(err);
     }
+}
+
+// refresh jwt token
+
+const refreshToken = async (req, res) => {
+    const refreshToken = req.body.refreshToken
+    if (refreshToken) {
+        try {
+            const { userID } = jwt.verify(refreshToken, process.env.JWT_SECRET_KEY)
+            const accessToken = jwt.sign({ userID: userID }, process.env.JWT_SECRET_KEY, { expiresIn: '1d' })
+            const newRefreshToken = jwt.sign({ userID: userID }, process.env.JWT_SECRET_KEY, { expiresIn: '7d' });
+
+            return res.status(400).json({
+                message: "User Validated", accessToken: accessToken, newRefreshToken: newRefreshToken
+            })
+        } catch (error) {
+            return res.status(401).json({
+                message: "Unauthorized User"
+            })
+        }
+    } else {
+        return res.status(401).json({
+            message: "Unauthorized User"
+        })
+    }
+
 }
 
 // change password controller
@@ -198,7 +226,9 @@ const resetPassword = async (req, res) => {
 export {
     createUser,
     loginUser,
+    refreshToken,
     changePassword,
     passwordResetEmailSender,
     resetPassword
 };
+
