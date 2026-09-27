@@ -1,22 +1,33 @@
 {
   "name": "auth_api",
-  "version": "1.0.0",
-  "description": "authentication api for front-end",
-  "main": "index.js",
+  "version": "2.0.0",
+  "description": "Authentication API: register, login, rotating refresh tokens, password change and reset",
+  "main": "src/server.js",
+  "type": "module",
+  "engines": {
+    "node": ">=20.19"
+  },
   "scripts": {
-    "start": "node index.js",
-    "start-dev":"nodemon index.js"
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "test": "NODE_ENV=test node --test --test-concurrency=1 \"test/**/*.test.js\"",
+    "check": "node --check src/server.js && npm test"
   },
   "author": "Sabbir Mahmud",
   "license": "ISC",
-  "type":"module",
   "dependencies": {
-    "bcrypt": "^5.0.1",
-    "cors": "^2.8.5",
-    "dotenv": "^16.0.1",
-    "express": "^4.18.1",
-    "jsonwebtoken": "^8.5.1",
-    "mongoose": "^6.4.4",
-    "nodemailer": "^6.7.7"
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.6",
+    "dotenv": "^18.0.4",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.7.0",
+    "helmet": "^8.3.0",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^9.10.2",
+    "nodemailer": "^10.0.11"
+  },
+  "devDependencies": {
+    "mongodb-memory-server": "^11.3.0",
+    "supertest": "^7.3.0"
   }
 }
