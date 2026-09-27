@@ -2,8 +2,6 @@
 
 Authentication API built with Express 5, MongoDB/Mongoose 9 and JWT. It covers registration, login, rotating refresh tokens, password change, password reset by email, and logging out of all devices.
 
-Legacy (v1.x) Postman docs: https://documenter.getpostman.com/view/20333890/UzQuQRbe (these describe the old routes; see "Migrating from 1.x" below)
-
 ## Quick start
 
 ```bash
